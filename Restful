@@ -3,7 +3,7 @@
 *COMMON request
 *COMMON response
 *This allows me to access and modify the request and response objects in all subroutines without passing them
-      $option jabba
+      $option jabba ;*Allow jBase objects
 *__________________________________________________________________________
       CALL WGETBODY(BODY) ;*Get the json request from the client
       CALL WSETCONTENTTYPE("application/json") ;*Set the content type of the response
