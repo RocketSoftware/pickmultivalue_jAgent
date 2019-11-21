@@ -1,0 +1,62 @@
+      INCLUDE WEB WEBCOMMON
+*I have all programs include a common statement with the following lines
+*COMMON request
+*COMMON response
+*This allows me to access and modify the request and response objects in all subroutines without passing them
+      $option jabba
+*__________________________________________________________________________
+      CALL WGETBODY(BODY) ;*Get the json request from the client
+      CALL WSETCONTENTTYPE("application/json") ;*Set the content type of the response
+*__________________________________________________________________________
+      response=new object() ;*Create response object
+      response->status=new object() ;*Create a stats object that the client can use to check for errors
+      response->data=new object() ;*Create the main object for the data to be returned to the client
+*__________________________________________________________________________
+      request=BODY->$fromjson() ;*Convert json from client to object
+*__________________________________________________________________________
+*Check to see if the JSON was converted to an object
+      IF NOT(request->$isobject()) THEN
+        response->status->errorCode='-100'
+        response->status->errorMessage='invalid JSON received - was not converted to an object'
+        GOTO FINISH
+      END
+*__________________________________________________________________________
+*Determine what subroutine the client wants to call
+      IF request->settings->programName='' THEN
+        response->status->errorCode='-101'
+        response->status->errorMessage='missing program name'
+        GOTO FINISH
+      END
+*__________________________________________________________________________
+*Custom logic to read the json user from a file and determine what subroutines the user is allowed to call
+      OPEN 'JSON.USER' TO F.JSON.USER ELSE
+        response->status->errorCode='-105'
+        response->status->errorMessage='JSON.USER file did not open'
+        GOTO FINISH
+      END
+      READ R.JSON.USER FROM F.JSON.USER,request->settings->jsonUser ELSE
+        response->status->errorCode='-106'
+        response->status->errorMessage='invalid jsonUser ':request->settings->jsonUser
+        GOTO FINISH
+      END
+      IF request->settings->jsonPassword#R.JSON.USER<1> THEN
+        response->status->errorCode='-107'
+        response->status->errorMessage='invalid jsonPassword'
+        GOTO FINISH
+      END
+      FIND request->settings->programName IN R.JSON.USER<2> SETTING POS ELSE
+        response->status->errorCode='-108'
+        response->status->errorMessage='not authorized to use ':request->settings->programName
+        GOTO FINISH
+      END
+*__________________________________________________________________________
+      ProgramName=request->settings->programName
+      CALL @ProgramName
+*__________________________________________________________________________
+FINISH:
+      IF response->status->errorCode='' THEN ;*If no errors were set, return a success
+        response->status->errorCode='100'
+        response->status->errorMessage='success'
+      END
+      CALL WSEND(response->$tojson()) ;*Convert the response object back to json and return to client
+*__________________________________________________________________________
