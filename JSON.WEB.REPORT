@@ -1,0 +1,53 @@
+      SUBROUTINE JSON.WEB.REPORT
+      INCLUDE WEB WEBCOMMON
+*I have all programs include a common statement with the following lines
+*COMMON request
+*COMMON response
+*This allows me to access and modify the request and response objects in all subroutines without passing them
+      $option jabba ;*Allow jBase objects
+      EM=''
+*__________________________________________________________________________
+      OPEN "FILE" TO F.IN.FILE ELSE EM :="FILE"
+      IF EM#"" THEN
+        response->status->errorCode='-200'
+        response->status->errorMessage='file open error ':EM
+        RETURN
+      END
+*__________________________________________________________________________
+      ACTION=request->data->action ;*Read element from the request object
+      BEGIN CASE
+        CASE ACTION='viewReport'
+          GOSUB VIEW.REPORT
+        CASE 1
+          response->status->errorCode='-201'
+          response->status->errorMessage='invalid action "':ACTION:'"'
+          RETURN
+      END CASE
+      RETURN
+*__________________________________________________________________________
+*__________________________________________________________________________
+*SUBROUTINES
+*__________________________________________________________________________
+*__________________________________________________________________________
+VIEW.REPORT:
+      rows=new array ;*Create new array to store report rows data
+      FILTER=request->data->filter ;*Read element from the request object
+      CMD='SSELECT FILE WITH FILTER = ":FILTER:" BY DESCRIPTION'
+      EXECUTE CMD RTNLIST LIST CAPTURING JUNK RETURNING CMD.ERROR.CODE
+      IF CMD.ERROR.CODE<1,1,1>='401' THEN
+        response->status->errorCode='-202'
+        response->status->errorMessage='no items'
+        RETURN
+      END
+      LOOP WHILE READNEXT ID FROM LIST DO
+        READ R.IN.FILE FROM F.OUT.FILE,ID ELSE CONTINUE
+        row=new object() ;*Create a new object to store the row
+        row->ID=ID
+        row->description=R.IN.FILE<1,1>
+        row->date=OCONV(R.IN.FILE<2,1>,"D4/")
+        row->balance=OCONV(R.IN.FILE<3,1>,"MR2")
+        rows->$append(row) ;*Append row object to the rows array
+      REPEAT
+      response->data->rows=rows ;*Set rows object = rows array
+      RETURN
+*__________________________________________________________________________
