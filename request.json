@@ -1,0 +1,11 @@
+{
+    "settings": {
+        "jsonUser": "USER",
+        "jsonPassword": "ABC123",
+        "programName": "JSON.WEB.REPORT"
+    },
+    "data": {
+    	"action": "viewReport",
+    	"filter": "5"
+    }
+}
