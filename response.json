@@ -1,0 +1,22 @@
+{
+    "status": {
+        "errorCode": 100,
+        "errorMessage": "success"
+    },
+    "data": {
+        "rows": [
+            {
+                "id": "AAA5MwAADjkXEw83",
+                "description": "SAMPLE1",
+                "date": "10/11/2018",
+                "balance": "203.75"
+            },
+            {
+                "id": "AAA0aAAADjeY_xj7",
+                "description": "SAMPLE2",
+                "date": "10/25/2018",
+                "balance": "53.47"
+            }
+        ]
+    }
+}
